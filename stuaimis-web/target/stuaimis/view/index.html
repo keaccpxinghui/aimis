@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>采购入库</title>
+<style type="text/css">
+input[type=text] {
+	width: 170px;
+	border: 1px solid #FEDBDD;
+	background-color: #FFF3F3;
+	border-radius: 5px;
+}
+
+input[type=date] {
+	width: 170px;
+	border: 1px solid #FEDBDD;
+	background-color: #FFF3F3;
+	border-radius: 5px;
+}
+
+div {
+	width: 740px;
+	border: 1px solid blue;
+	margin-left: 300px;
+	margin-top: 50px;
+}
+
+#p1 {
+	background-color: blue;
+	margin-top: 0px;
+}
+
+table {
+	width: 600px;
+	height: 300px;
+	margin-left: 70px;
+}
+
+textarea {
+	border: 1px solid #FEDBDD;
+	border-radius: 5px;
+}
+
+p input {
+	background-color: white;
+	border: 2px solid silver;
+	border-radius: 5px;
+}
+</style>
+</head>
+<body>
+	<form action="" method="post">
+		<div>
+			<p id="p1">
+				<strong>采购入库</strong>
+			</p>
+			<p></p>
+			<p></p>
+			<table>
+				<tr>
+					<td>单据编号：</td>
+					<td><input type="text" name="billno" value=""></td>
+					<td>单据日期：</td>
+					<td><input type="date" name="billdate" value=""></td>
+				</tr>
+				<tr>
+					<td>供应商：</td>
+					<td><input type="text" name="suppliername" value=""></td>
+					<td>供应商地址：</td>
+					<td><input type="text" name="supplieraddress" value=""></td>
+				</tr>
+				<tr>
+					<td>部门：</td>
+					<td><input type="text" name="department" value=""></td>
+					<td>仓库：</td>
+					<td><input type="text" name="warehouse" value=""></td>
+				</tr>
+				<tr>
+					<td>采购人员：</td>
+					<td><input type="text" name="buyer" value=""></td>
+					<td>制单人员：</td>
+					<td><input type="text" name="executor" value=""></td>
+				</tr>
+				<tr>
+					<td>入库明细：</td>
+					<td colspan="3"><textarea rows="6" cols="63" name="detail"></textarea></td>
+				</tr>
+			</table>
+			<p>
+				<input type="button" value="加载测试数据" onclick="loadTest()"> <input
+					type="button" value="加载服务端数据" onclick="serviceData()"> <input
+					type="button" value="保存" onclick="addBillDetail()"> <input
+					type="reset" value="清空">
+			</p>
+		</div>
+	</form>
+</body>
+<script type="text/javascript" src="../js/jquery-1.12.4.js"></script>
+<script type="text/javascript">
+	//全局异常处理
+	$(document).ajaxError(function() {
+		console.log("服务器异常");
+	});
+	//保存数据
+	function addBillDetail() {
+		var billno = $.trim($("[name=billno]").val());
+		if (billno != "") {
+			//查询单号是否已存在
+			$.getJSON(
+							"/springmvc_billDetail/api/billDetails/" + billno,
+							function(data) {
+								if (data.code == "200") {
+									alert("此单号已存在，请修改单号后在保存");
+								} else {
+									var isNotNull = false;
+									var $tests = $("input[type=text]");
+									for (var i = 0; i < $tests.length; i++) {
+										if ($.trim($($tests[i]).val()) == "") {
+											isNotNull = false;
+											break;
+										} else {
+											if ($.trim($("[type=date]").val()) == ""
+													|| $
+															.trim($(
+																	"[name=detail]")
+																	.val()) == "") {
+												isNotNull = false;
+											} else {
+												isNotNull = true;
+
+											}
+										}
+									}
+
+									//单号不存在获取保存数据
+									if (isNotNull) {
+										var bill = {};
+										bill["billno"] = $("[name=billno]")
+												.val();
+										bill["billdate"] = $("[name=billdate]")
+												.val();
+										bill["suppliername"] = $(
+												"[name=suppliername]").val();
+										bill["supplieraddress"] = $(
+												"[name=supplieraddress]").val();
+										bill["department"] = $(
+												"[name=department]").val();
+										bill["warehouse"] = $(
+												"[name=warehouse]").val();
+										bill["buyer"] = $("[name=buyer]").val();
+										bill["executor"] = $("[name=executor]")
+												.val();
+										bill["detail"] = JSON.parse($(
+												"[name=detail]").val());
+										alert(JSON.stringify(bill));
+										$.ajax({
+													url : "/springmvc_billDetail/api/billDetails/billDetail",
+													type : "post",
+													dataType : "json",
+													contentType : "application/json",
+													data : JSON.stringify(bill),
+													success : function(data) {
+														if (data.code == "200") {
+															alert(data.msg);
+														} else {
+															alert(1111);
+														}
+
+													},
+											
+												});
+									} else {
+										alert("信息不能为空");
+									}
+
+								}
+
+							});
+		} else {
+			alert("单号不能为空");
+		}
+	}
+	//加载服务端数据
+	function serviceData() {
+		var billno = $("[name=billno]").val();
+		if (billno != "") {
+			$.getJSON("/springmvc_billDetail/api/billDetails/" + billno,
+					function(data) {
+						if (data.code == "200") {
+							var billDetail = JSON.parse(data.msg);
+							$("[name=billno]").val(billDetail.billno);
+							$("[name=billdate]").val(billDetail.billdate);
+							$("[name=suppliername]").val(
+									billDetail.suppliername);
+							$("[name=supplieraddress]").val(
+									billDetail.supplieraddress);
+							$("[name=department]").val(billDetail.department);
+							$("[name=warehouse]").val(billDetail.warehouse);
+							$("[name=buyer]").val(billDetail.buyer);
+							$("[name=executor]").val(billDetail.executor);
+							$("[name=detail]").val(
+									JSON.stringify(billDetail.detail));
+							isOk = false;
+						} else {
+							alert("抱歉没有找到你输入的单号信息");
+							isOk = true;
+						}
+
+					});
+		} else {
+			alert("请先输入单号");
+		}
+
+	}
+	//测试数据
+	function loadTest() {
+		var testData = {
+			"billno" : "20160119001",
+			"billdate" : "2016-01-19",
+			"suppliername" : "联想株洲总代理",
+			"supplieraddress" : "株洲天元区黄山路",
+			"department" : "物控部",
+			"warehouse" : "株洲仓",
+			"buyer" : "牛采购",
+			"executor" : "小花",
+			"details" : [ {
+				"billno" : "20160119001",
+				"lineid" : 1,
+				"goodsname" : "联想笔记本",
+				"goodsnum" : 10,
+				"goodsprice" : 3000.00,
+				"goodsmoneyamt" : 30000.00,
+				"ispresent" : 1
+			}, {
+				"billno" : "20160119001",
+				"lineid" : 2,
+				"goodsname" : "数码相机",
+				"goodsnum" : 10,
+				"goodsprice" : 2000.00,
+				"goodsmoneyamt" : 20000.00,
+				"ispresent" : 1
+			} ]
+		};
+
+		$("[name=billno]").val(testData.billno);
+		$("[name=billdate]").val(testData.billdate);
+		$("[name=suppliername]").val(testData.suppliername);
+		$("[name=supplieraddress]").val(testData.supplieraddress);
+		$("[name=department]").val(testData.department);
+		$("[name=warehouse]").val(testData.warehouse);
+		$("[name=buyer]").val(testData.buyer);
+		$("[name=executor]").val(testData.executor);
+		$("[name=detail]").val(JSON.stringify(testData.details));
+	}
+</script>
+</html>

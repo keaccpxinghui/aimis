@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd"><!-- -->
+
+
+<mapper namespace="com.ks.stuaimis.dao.bill.IBillDetailDao">
+
+	<!-- 自定义 orm 映射 -->
+	<resultMap type="bill" id="billMap">
+		<id column="billno" property="billno" />
+		<result column="billdate" property="billdate" />
+		<result column="suppliername" property="suppliername" />
+		<result column="supplieraddress" property="supplieraddress" />
+		<result column="department" property="department" />
+		<result column="warehouse" property="warehouse" />
+		<result column="buyer" property="buyer" />
+		<result column="executor" property="executor" />
+		<collection property="detail" column="billno" select="queryDetail">
+		</collection>
+	</resultMap>
+
+	<select id="findAllBill" resultMap="billMap">
+		select * from tb_bill
+		<where>
+			<if test="billno!=null">
+				and billno=#{billno}
+			</if>
+		</where>
+
+
+	</select>
+	<select id="queryDetail" resultType="detail">
+		select * from tb_detail
+		where billno=#{0}
+	</select>
+
+	<!-- 添加 -->
+	<insert id="saveBillDetail">
+		insert into tb_bill
+		(`billno`,`billdate`,`suppliername`,`supplieraddress`,`department`,`warehouse`,`buyer`,`executor`)
+		values
+		(#{bill.billno},#{bill.billdate,jdbcType=DATE},#{bill.suppliername},#{bill.supplieraddress},#{bill.department},#{bill.warehouse},#{bill.buyer},#{bill.executor});
+		<if test="bill.detail.size()!=0">
+			insert into tb_detail
+			(`billno`,`goodsname`,`goodsnum`,`goodsprice`,`goodsmoneyamt`,`ispresent`)
+			values
+			<foreach collection="bill.detail" separator="," item="temp">
+				(#{bill.billno},#{temp.goodsname},#{temp.goodsnum},#{temp.goodsprice},#{temp.goodsmoneyamt},#{temp.ispresent})
+			</foreach>
+			;
+		</if>
+	</insert>
+
+
+</mapper>
+  
